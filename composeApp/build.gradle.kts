@@ -33,9 +33,16 @@ compose.desktop {
         mainClass = "MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb,TargetFormat.Exe)
             packageName = "com.ikongji.tvboxassistant"
             packageVersion = "1.0.0"
+
+            windows{
+                shortcut = true
+                dirChooser = true
+               // upgradeUuid = "1"
+               // iconFile.set(project.file("compose-icon."))
+            }
         }
     }
 }
