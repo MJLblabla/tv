@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import ennity.ADBDevice
 import ennity.ADBDeviceCollection
 import ennity.ADBUIState
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -29,6 +30,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import tvboxassistant.composeapp.generated.resources.Res
 import tvboxassistant.composeapp.generated.resources.ic_launcher
 import tvboxassistant.composeapp.generated.resources.ic_xiala
+import java.io.File
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -52,7 +54,7 @@ fun App() {
             Box(
                 modifier = Modifier.fillMaxSize().background(
                     brush = Brush.verticalGradient(
-                        colors = listOf( Color(0xFF3C7AF2),Color(0xFF6B9CFC)),
+                        colors = listOf(Color(0xFF3C7AF2), Color(0xFF6B9CFC)),
                     )
                 ), contentAlignment = Alignment.Center
             ) {
@@ -117,21 +119,40 @@ fun App() {
                         }
                         adbUIState = adbUIState.copy(isDetecting = true)
                         uiScope.launch {
-                            delay(3000)
-
                             val ret = mutableListOf<ADBDevice>()
-                            for (i in 1..3) {
-                                ret.add(ADBDevice("设备1", false, "1212"))
+
+                            try {
+                                val dadbs = if (adbUIState.isUseUSBConnect) {
+                                    ADBDetector.detectByUSB()
+                                } else {
+                                    ADBDetector.detectByIp(adbUIState.portStr)
+                                }
+
+                                dadbs.forEach {
+                                    ret.add(ADBDevice(it.toString(), false, ""))
+                                }
+
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+
+                                snackbarHostState.showSnackbar(
+                                    message = "探测成功 失败 - ${e.message}",
+                                    duration = SnackbarDuration.Short
+                                )
+                            } finally {
+                                if (ret.isEmpty()) {
+                                    snackbarHostState.showSnackbar(
+                                        message = "没有探测的任何设备～",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                                adbUIState = adbUIState.copy(
+                                    isDetecting = false,
+                                    adbCollection = ADBDeviceCollection(ret),
+                                    showDevList = ret.isNotEmpty()
+                                )
                             }
-                            adbUIState = adbUIState.copy(
-                                isDetecting = false,
-                                adbCollection = ADBDeviceCollection(ret),
-                                showDevList = true
-                            )
-
-                            snackbarHostState.showSnackbar(message = "探测成功", duration = SnackbarDuration.Short)
                         }
-
                     }, contentAlignment = Alignment.Center) {
                         Box(
                             modifier = Modifier.size(100.dp).background(Color(0x55FFFFFF), shape = CircleShape),
@@ -141,6 +162,7 @@ fun App() {
                         Text("扫描", color = Color.Black)
                     }
                 }
+
                 if (adbUIState.showDevList) {
                     DeviceRetView(adbUIState, snackbarHostState) {
                         uiScope.launch {
@@ -228,7 +250,9 @@ fun DeviceRetView(adbUIState: ADBUIState, snackbarHostState: SnackbarHostState, 
         },
         contentAlignment = Alignment.Center
     ) {
-        Box(modifier = Modifier.padding(100.dp).fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.padding(100.dp).fillMaxSize().clickable {
+
+        }, contentAlignment = Alignment.Center) {
             Surface(shape = RoundedCornerShape(8.dp), elevation = 30.dp) {
                 Column(
                     Modifier.padding(24.dp), verticalArrangement = Arrangement.Center,
@@ -252,6 +276,12 @@ fun DeviceRetView(adbUIState: ADBUIState, snackbarHostState: SnackbarHostState, 
                                 snackbarHostState.showSnackbar("没有设备选中", duration = SnackbarDuration.Short)
                             }
                             return@Button
+                        }
+
+                        val file = File("files/ic_app_clone.png")
+                        println("  " + file.exists() + "  " + file.absolutePath)
+                        uiScope.launch {
+                            snackbarHostState.showSnackbar("文件路径:   "+file.absolutePath, duration = SnackbarDuration.Short)
                         }
 
 
