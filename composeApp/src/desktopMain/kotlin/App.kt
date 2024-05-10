@@ -30,6 +30,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import tvboxassistant.composeapp.generated.resources.Res
 import tvboxassistant.composeapp.generated.resources.ic_launcher
 import tvboxassistant.composeapp.generated.resources.ic_xiala
+import java.io.File
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -121,14 +122,14 @@ fun App() {
                             val ret = mutableListOf<ADBDevice>()
 
                             try {
-                                if (adbUIState.isUseUSBConnect) {
+                                val dadbs = if (adbUIState.isUseUSBConnect) {
                                     ADBDetector.detectByUSB()
                                 } else {
                                     ADBDetector.detectByIp(adbUIState.portStr)
                                 }
 
-                                for (i in 1..3) {
-                                    ret.add(ADBDevice("设备1", false, "1212"))
+                                dadbs.forEach {
+                                    ret.add(ADBDevice(it.toString(), false, ""))
                                 }
 
                             } catch (e: Exception) {
@@ -148,12 +149,10 @@ fun App() {
                                 adbUIState = adbUIState.copy(
                                     isDetecting = false,
                                     adbCollection = ADBDeviceCollection(ret),
-                                    showDevList = true
+                                    showDevList = ret.isNotEmpty()
                                 )
                             }
-
                         }
-
                     }, contentAlignment = Alignment.Center) {
                         Box(
                             modifier = Modifier.size(100.dp).background(Color(0x55FFFFFF), shape = CircleShape),
@@ -163,6 +162,7 @@ fun App() {
                         Text("扫描", color = Color.Black)
                     }
                 }
+
                 if (adbUIState.showDevList) {
                     DeviceRetView(adbUIState, snackbarHostState) {
                         uiScope.launch {
@@ -250,7 +250,9 @@ fun DeviceRetView(adbUIState: ADBUIState, snackbarHostState: SnackbarHostState, 
         },
         contentAlignment = Alignment.Center
     ) {
-        Box(modifier = Modifier.padding(100.dp).fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.padding(100.dp).fillMaxSize().clickable {
+
+        }, contentAlignment = Alignment.Center) {
             Surface(shape = RoundedCornerShape(8.dp), elevation = 30.dp) {
                 Column(
                     Modifier.padding(24.dp), verticalArrangement = Arrangement.Center,
@@ -274,6 +276,12 @@ fun DeviceRetView(adbUIState: ADBUIState, snackbarHostState: SnackbarHostState, 
                                 snackbarHostState.showSnackbar("没有设备选中", duration = SnackbarDuration.Short)
                             }
                             return@Button
+                        }
+
+                        val file = File("files/ic_app_clone.png")
+                        println("  " + file.exists() + "  " + file.absolutePath)
+                        uiScope.launch {
+                            snackbarHostState.showSnackbar("文件路径:   "+file.absolutePath, duration = SnackbarDuration.Short)
                         }
 
 
