@@ -5,12 +5,14 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
 }
 val coroutinesVersion = "1.7.3"
+
+val  ktorVersion = "2.3.9"
 kotlin {
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -23,6 +25,14 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation("dev.mobile:dadb:1.2.7")
+            implementation("io.github.alexzhirkevich:qrose:1.0.0")
+            implementation("io.github.alexzhirkevich:qrose-oned:1.0.0")
+            implementation("io.ktor:ktor-client-core:$ktorVersion")
+            implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+           // implementation("io.ktor:ktor-client-darwin:$ktorVersion")
+            implementation("io.ktor:ktor-client-cio:$ktorVersion")
+
+
         }
     }
 }

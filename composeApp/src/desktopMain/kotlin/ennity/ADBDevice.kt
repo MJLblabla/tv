@@ -3,29 +3,33 @@ package ennity
 import androidx.compose.runtime.Immutable
 import dadb.Dadb
 
-data class ADBDevice(val devName: String, var isSelect: Boolean, val deviceID: String) {
+data class ADBDevice(val devName: String, var isSelect: Boolean, var deviceID: String = "") {
     var adb: Dadb? = null
 }
 
-@Immutable
-data class ADBDeviceCollection(val adbDevices: MutableList<ADBDevice>)
+enum class DetectorType(val str: String) {
+    LAN("局域网"),
+    USB("usb"),
+    IP("ip-端口")
+}
 
 data class ADBUIState(
-    val adbCollection: ADBDeviceCollection,
-    val isStarting: Boolean,
-    val isUseUSBConnect: Boolean,
+    val adbDevices: MutableList<ADBDevice>,
+    val detectorType: DetectorType = DetectorType.LAN,
     val isDetecting: Boolean,
     val portStr: String = "5555",
-    val showDevList: Boolean = false
+    val ip: String = "",
+    val showDevList: Boolean = false,
+    val version: Int = 0
 ) {
     fun resetDevices() {
-        adbCollection.adbDevices.forEach {
+        adbDevices.forEach {
             try {
                 it.adb?.close()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-        adbCollection.adbDevices.clear()
+        adbDevices.clear()
     }
 }
