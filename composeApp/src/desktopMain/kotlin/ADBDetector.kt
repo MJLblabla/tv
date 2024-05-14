@@ -1,5 +1,10 @@
 import dadb.Dadb
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.io.BufferedReader
 import java.io.IOException
+import java.io.InputStreamReader
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
@@ -145,8 +150,25 @@ object ADBDetector {
                 continuation.resumeWithException(e)
             }
         }.start()
-
     }
 
 
+    fun enableAdb(adbPath: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val process: Process = Runtime.getRuntime().exec(adbPath + " devices")
+                val reader = BufferedReader(InputStreamReader(process.inputStream))
+                var line: String?
+                while ((reader.readLine().also { line = it }) != null) {
+                    println(line)
+                }
+                // 等待命令执行完成并获取结果
+                val exitCode = process.waitFor()
+                println("Command executed with exit code: $exitCode")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+    }
 }
