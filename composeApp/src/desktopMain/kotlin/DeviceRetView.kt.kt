@@ -42,7 +42,7 @@ fun DeviceRetView(
         },
         contentAlignment = Alignment.Center
     ) {
-        Box(modifier = Modifier.padding(100.dp).fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.padding(50.dp).fillMaxSize(), contentAlignment = Alignment.Center) {
             Surface(shape = RoundedCornerShape(8.dp), elevation = 30.dp, modifier = Modifier.clickable { }) {
                 Column(
                     Modifier.padding(24.dp), verticalArrangement = Arrangement.Center,
@@ -188,18 +188,17 @@ fun DeviceItem(device: ADBDevice) {
     var showDialog by remember { mutableStateOf(false) }
     println("DeviceItem ${device.deviceID}")
     val isSelect = remember { mutableStateOf(false) }
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Text("设备:" + device.devName)
-            Spacer(modifier = Modifier.padding(10.dp))
-            Checkbox(
-                checked = isSelect.value,
-                onCheckedChange = { newChecked ->
-                    device.isSelect = newChecked
-                    isSelect.value = newChecked
-                }
-            )
-        }
+
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Text("设备:" + device.devName)
+        Spacer(modifier = Modifier.padding(10.dp))
+        Checkbox(
+            checked = isSelect.value,
+            onCheckedChange = { newChecked ->
+                device.isSelect = newChecked
+                isSelect.value = newChecked
+            }
+        )
         Spacer(modifier = Modifier.padding(10.dp))
         if (device.deviceID.isNotEmpty()) {
             Text("节点id:")
@@ -212,6 +211,7 @@ fun DeviceItem(device: ADBDevice) {
                 })
         }
     }
+
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },

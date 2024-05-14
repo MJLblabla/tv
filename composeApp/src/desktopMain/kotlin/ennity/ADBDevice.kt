@@ -7,13 +7,20 @@ data class ADBDevice(val devName: String, var isSelect: Boolean, var deviceID: S
     var adb: Dadb? = null
 }
 
+enum class DetectorType(val str: String) {
+    LAN("局域网"),
+    USB("usb"),
+    IP("ip-端口")
+}
+
 data class ADBUIState(
     val adbDevices: MutableList<ADBDevice>,
-    val isUseUSBConnect: Boolean,
+    val detectorType: DetectorType = DetectorType.LAN,
     val isDetecting: Boolean,
     val portStr: String = "5555",
+    val ip: String = "",
     val showDevList: Boolean = false,
-    val version:Int = 0
+    val version: Int = 0
 ) {
     fun resetDevices() {
         adbDevices.forEach {

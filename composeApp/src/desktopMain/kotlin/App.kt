@@ -1,11 +1,9 @@
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -14,18 +12,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dadb.Dadb
 import ennity.ADBDevice
 import ennity.ADBUIState
+import ennity.DetectorType
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import tvboxassistant.composeapp.generated.resources.Res
 import tvboxassistant.composeapp.generated.resources.ic_launcher
-import tvboxassistant.composeapp.generated.resources.ic_xiala
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -34,13 +34,7 @@ fun App() {
     MaterialTheme {
         val snackbarHostState = remember { SnackbarHostState() }
         var adbUIState by remember {
-            mutableStateOf<ADBUIState>(
-                ADBUIState(
-                    (mutableListOf<ADBDevice>()),
-                    isUseUSBConnect = false,
-                    isDetecting = false
-                )
-            )
+            mutableStateOf<ADBUIState>(ADBUIState((mutableListOf<ADBDevice>()), isDetecting = false))
         }
         val uiScope = rememberCoroutineScope()
 
@@ -60,10 +54,10 @@ fun App() {
                     Image(painter = painterResource(Res.drawable.ic_launcher), "")
                     Spacer(modifier = Modifier.padding(10.dp))
 
-                    AnimatedVisibility(adbUIState.isUseUSBConnect) {
+                    AnimatedVisibility(adbUIState.detectorType == DetectorType.USB) {
                         Box(modifier = Modifier.clickable {
                             Util.openBrowserDownAdb()
-                        }){
+                        }) {
                             Text("若未安装usb驱动,点击安装usb驱动", color = Color.White, fontSize = 12.sp)
                         }
                     }
@@ -74,12 +68,13 @@ fun App() {
                             Text("连接方式", color = Color.White)
                         }
                         Spacer(modifier = Modifier.padding(10.dp))
-                        DropdownMenuExample(adbUIState.isUseUSBConnect) {
-                            adbUIState = adbUIState.copy(isUseUSBConnect = it)
+                        DetectTypeDropdownMenu(adbUIState.detectorType) {
+                            adbUIState = adbUIState.copy(detectorType = it)
                         }
                     }
+
                     Spacer(modifier = Modifier.padding(10.dp))
-                    AnimatedVisibility(!adbUIState.isUseUSBConnect) {
+                    AnimatedVisibility(DetectorType.LAN == adbUIState.detectorType) {
                         Spacer(modifier = Modifier.padding(10.dp))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -111,21 +106,95 @@ fun App() {
                         }
                     }
 
+                    Spacer(modifier = Modifier.padding(10.dp))
+                    AnimatedVisibility(DetectorType.IP == adbUIState.detectorType) {
+                        Spacer(modifier = Modifier.padding(10.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+
+                            RoundedCornerBorderBackground(modifier = Modifier.width(160.dp)) {
+                                BasicTextField(
+                                    value = adbUIState.ip,
+                                    onValueChange = { newText ->
+                                        adbUIState = adbUIState.copy(ip = newText)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textStyle = MaterialTheme.typography.body1,
+                                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                                    decorationBox = { innerTextField ->
+                                        Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                            if (adbUIState.ip.isEmpty()) {
+                                                Text(
+                                                    text = "请输入盒子ip",
+                                                    style = TextStyle(color = Color.Gray)
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
+                                )
+                            }
+                            Spacer(modifier = Modifier.padding(10.dp))
+                            RoundedCornerBorderBackground(modifier = Modifier.width(160.dp)) {
+                                BasicTextField(
+                                    value = adbUIState.portStr,
+                                    onValueChange = { newText ->
+                                        adbUIState = adbUIState.copy(portStr = newText)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textStyle = MaterialTheme.typography.body1,
+                                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                                    decorationBox = { innerTextField ->
+                                        Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                            if (adbUIState.portStr.isEmpty()) {
+                                                Text(
+                                                    text = "请输入端口号",
+                                                    style = TextStyle(color = Color.Gray)
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+
                     Box(modifier = Modifier.clickable {
                         if (adbUIState.isDetecting) {
                             return@clickable
                         }
                         adbUIState = adbUIState.copy(isDetecting = true)
+
+                        if (adbUIState.detectorType == DetectorType.LAN || adbUIState.detectorType == DetectorType.IP) {
+                            if (adbUIState.portStr.isEmpty()) {
+                                uiScope.launch {
+                                    snackbarHostState.showSnackbar("请输入端口号", duration = SnackbarDuration.Short)
+                                }
+                                return@clickable
+                            }
+                        }
+                        if (adbUIState.detectorType == DetectorType.IP) {
+                            if (adbUIState.ip.isEmpty()) {
+                                uiScope.launch {
+                                    snackbarHostState.showSnackbar("请输入盒子ip", duration = SnackbarDuration.Short)
+                                }
+                                return@clickable
+                            }
+                        }
+
                         uiScope.launch {
                             val ret = mutableListOf<ADBDevice>()
 
                             try {
-                                val dadbs = if (adbUIState.isUseUSBConnect) {
-                                    ADBDetector.detectByUSB()
-                                } else {
-                                    ADBDetector.detectByIp(adbUIState.portStr)
+                                val dadbs = when (adbUIState.detectorType) {
+                                    DetectorType.USB -> ADBDetector.detectByUSB()
+                                    DetectorType.IP -> ADBDetector.detectByIP(adbUIState.ip, adbUIState.portStr)
+                                    else -> ADBDetector.detectByLan(adbUIState.portStr)
                                 }
-
                                 dadbs.forEach {
                                     ret.add(ADBDevice(it.toString(), false, "").apply {
                                         adb = it
@@ -185,59 +254,3 @@ fun App() {
 }
 
 
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-fun DropdownMenuExample(useUSBConnect: Boolean, onSelect: (Boolean) -> Unit) {
-    val options = listOf("局域网连接", "usb连接")
-    val expanded = remember { mutableStateOf(false) }
-    val selectedIndex = if (useUSBConnect) {
-        1
-    } else {
-        0
-    }
-
-    Column {
-        DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false }
-        ) {
-            options.forEachIndexed { index, option ->
-                DropdownMenuItem(onClick = {
-                    onSelect(index == 1)
-                    expanded.value = false
-                }) {
-                    Text(option)
-                }
-            }
-        }
-
-        RoundedCornerBorderBackground(modifier = Modifier.width(300.dp).clickable {
-            expanded.value = true
-        }) {
-            Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(options[selectedIndex], color = Color.White)
-                Image(painter = painterResource(Res.drawable.ic_xiala), "")
-
-            }
-        }
-
-    }
-}
-
-@Composable
-fun RoundedCornerBorderBackground(modifier: Modifier, content: @Composable BoxScope.() -> Unit) {
-    Box(
-        modifier.background(
-            color = Color(0x55FFFFFF),
-            shape = RoundedCornerShape(16.dp) // 设置圆角半径为 16dp
-        )
-            .border(
-                width = 1.dp,
-                color = Color.White,
-                shape = RoundedCornerShape(16.dp) // 设置边框圆角半径为 16dp，与背景相同
-            ).padding(8.dp), content = content
-    )
-}

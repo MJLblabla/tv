@@ -1,5 +1,4 @@
 import dadb.Dadb
-import kotlinx.coroutines.*
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -53,7 +52,22 @@ object ADBDetector {
         return ret
     }
 
-    suspend fun detectByIp(port: String) = suspendCoroutine<List<Dadb>> { continuation ->
+
+    suspend fun detectByIP(host: String, port: String) = suspendCoroutine<List<Dadb>> { continuation ->
+        Thread {
+            val retList = mutableListOf<Dadb>()
+            try {
+                val adb = Dadb.create(host, port.toInt())
+                adb.openShell("pwd")
+                retList.add(adb)
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+            continuation.resume(retList)
+        }.start()
+    }
+
+    suspend fun detectByLan(port: String) = suspendCoroutine<List<Dadb>> { continuation ->
 
         Thread {
             val startTime = System.currentTimeMillis()
@@ -68,20 +82,20 @@ object ADBDetector {
                     throw Exception("获取本机ip地址失败～")
                 }
 
-                threadPool.execute {
-                    println(" 开始 目标ip 100.100.108.113  ")
-                    val ret = ping("100.100.108.18", port.toInt())
-                    println(" 目标ip 100.100.108.113  是否可达 $ret")
-                    if (ret) {
-                        val adb = Dadb.create("100.100.108.18", port.toInt())
-                        try {
-                            adb.openShell("pwd")
-                            retList.add(adb)
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
+//                threadPool.execute {
+//                    println(" 开始 目标ip 100.100.108.113  ")
+//                    val ret = ping("100.100.108.18", port.toInt())
+//                    println(" 目标ip 100.100.108.113  是否可达 $ret")
+//                    if (ret) {
+//                        val adb = Dadb.create("100.100.108.18", port.toInt())
+//                        try {
+//                            adb.openShell("pwd")
+//                            retList.add(adb)
+//                        } catch (e: IOException) {
+//                            e.printStackTrace()
+//                        }
+//                    }
+//                }
 
                 for (i in 0..255) {
                     val targetIP = "$firstThreeNumbers.$i"
