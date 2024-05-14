@@ -70,10 +70,10 @@ object ADBDetector {
 
                 threadPool.execute {
                     println(" 开始 目标ip 100.100.108.113  ")
-                    val ret = ping("100.100.108.113", port.toInt())
+                    val ret = ping("100.100.108.18", port.toInt())
                     println(" 目标ip 100.100.108.113  是否可达 $ret")
                     if (ret) {
-                        val adb = Dadb.create("100.100.108.113", port.toInt())
+                        val adb = Dadb.create("100.100.108.18", port.toInt())
                         try {
                             adb.openShell("pwd")
                             retList.add(adb)

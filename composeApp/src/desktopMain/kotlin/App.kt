@@ -12,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,9 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ennity.ADBDevice
 import ennity.ADBUIState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -30,8 +26,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import tvboxassistant.composeapp.generated.resources.Res
 import tvboxassistant.composeapp.generated.resources.ic_launcher
 import tvboxassistant.composeapp.generated.resources.ic_xiala
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -67,7 +61,11 @@ fun App() {
                     Spacer(modifier = Modifier.padding(10.dp))
 
                     AnimatedVisibility(adbUIState.isUseUSBConnect) {
-                        Text("若未安装usb驱动,点击安装usb驱动", color = Color.White, fontSize = 12.sp)
+                        Box(modifier = Modifier.clickable {
+                            Util.openBrowserDownAdb()
+                        }){
+                            Text("若未安装usb驱动,点击安装usb驱动", color = Color.White, fontSize = 12.sp)
+                        }
                     }
 
                     Spacer(modifier = Modifier.padding(10.dp))
@@ -242,165 +240,4 @@ fun RoundedCornerBorderBackground(modifier: Modifier, content: @Composable BoxSc
                 shape = RoundedCornerShape(16.dp) // 设置边框圆角半径为 16dp，与背景相同
             ).padding(8.dp), content = content
     )
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-fun DeviceRetView(
-    adbDevices: List<ADBDevice>,
-    snackbarHostState: SnackbarHostState,
-    dismissCallback: () -> Unit,
-    updaterCallback: () -> Unit
-) {
-    println("DeviceRetView")
-
-    val isStarting = remember { mutableStateOf(false) }
-    val uiScope = rememberCoroutineScope()
-    Box(
-        modifier = Modifier.background(color = Color(0x55000000)).fillMaxSize().clickable {
-            if (isStarting.value) {
-                return@clickable
-            }
-            dismissCallback.invoke()
-        },
-        contentAlignment = Alignment.Center
-    ) {
-        Box(modifier = Modifier.padding(100.dp).fillMaxSize(), contentAlignment = Alignment.Center) {
-            Surface(shape = RoundedCornerShape(8.dp), elevation = 30.dp, modifier = Modifier.clickable { }) {
-                Column(
-                    Modifier.padding(24.dp), verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    adbDevices.forEach {
-                        DeviceItem(it)
-                    }
-                    Button(onClick = {
-                        if (isStarting.value) {
-                            return@Button
-                        }
-                        var hastSelect = false
-                        adbDevices.forEach {
-                            if (it.isSelect) {
-                                hastSelect = true
-                            }
-                        }
-                        if (!hastSelect) {
-                            uiScope.launch {
-                                snackbarHostState.showSnackbar("没有设备选中", duration = SnackbarDuration.Short)
-                            }
-                            return@Button
-                        }
-
-                        val file = File("files/app-noui.apk")
-                        println("  " + file.exists() + "  " + file.absolutePath)
-
-                        uiScope.launch {
-                            isStarting.value = true
-                            try {
-                                if (!file.exists()) {
-                                    val dir = File("files/")
-                                    val ret = dir.mkdirs()
-                                    println("创建文件结果 $ret")
-                                    val bs = Res.readBytes("files/app-noui.apk")
-                                    val fos = FileOutputStream(file)
-                                    fos.write(bs)
-                                    fos.close()
-                                }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                snackbarHostState.showSnackbar("文件读取失败")
-                            }
-                            var hasInstall = false
-                            val ret = async(Dispatchers.IO) {
-                                adbDevices.forEach { dev ->
-                                    if (dev.isSelect) {
-                                        try {
-                                            println("安装文件 " + dev.adb + "  " + file.absolutePath)
-                                            // it.adb?.install(file)
-
-                                            dev.adb?.openShell().use { shellStream ->
-                                                shellStream?.write("echo hello\n")
-
-                                                val shellPacket = shellStream?.read()
-                                                println("shell packet: $shellPacket")
-
-                                                shellStream?.write("am start -n com.qiniu.upd.app/com.qiniu.upd.app.MainActivity\n")
-
-                                                val shellResponse = shellStream?.read()
-                                                println("shell packet: $shellResponse")
-
-                                                delay(1000)
-                                                shellStream?.write("cat  /data/user/0/com.qiniu.upd.app/files/nodeID/nodeID.txt \n")
-
-                                                val nodeID1 = shellStream?.read()?.toString() ?: ""
-                                                println("shell packet: $nodeID1")
-
-                                                if (nodeID1.startsWith("STDOUT: ant")) {
-                                                    dev.deviceID = nodeID1.replace("STDOUT: ", "")
-                                                } else {
-                                                    shellStream?.write("cat  /data/user_de/0/com.qiniu.upd.app/files/nodeID/nodeID.txt \n")
-                                                    val nodeID2 = shellStream?.read()?.toString() ?: ""
-                                                    println("shell packet: $nodeID2")
-                                                    if (nodeID2.startsWith("STDOUT: ant")) {
-                                                        dev.deviceID = nodeID2.replace("STDOUT: ", "")
-                                                    }
-                                                }
-
-                                                shellStream?.write("exit\n")
-                                                val shellResponse2 = shellStream?.readAll()
-                                                println("shell packet: $shellResponse2")
-
-                                            }
-
-                                            hasInstall = true
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                        }
-                                    }
-                                }
-                            }
-                            ret.await()
-                            isStarting.value = false
-                            if (hasInstall) {
-                                updaterCallback.invoke()
-                            }
-                        }
-
-                    }) {
-                        val text = if (isStarting.value) {
-                            "进行中"
-                        } else {
-                            "开始"
-                        }
-                        Text(text)
-                    }
-                }
-            }
-        }
-
-    }
-
-}
-
-@Composable
-fun DeviceItem(device: ADBDevice) {
-    println("DeviceItem ${device.deviceID}")
-    val isSelect = remember { mutableStateOf(false) }
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Text("设备:" + device.devName)
-            Spacer(modifier = Modifier.padding(10.dp))
-            Checkbox(
-                checked = isSelect.value,
-                onCheckedChange = { newChecked ->
-                    device.isSelect = newChecked
-                    isSelect.value = newChecked
-                }
-            )
-        }
-        if (device.deviceID.isNotEmpty()) {
-            Text("节点id:" + device.deviceID)
-        }
-    }
-
 }
