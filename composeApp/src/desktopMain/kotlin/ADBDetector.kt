@@ -145,11 +145,12 @@ object ADBDetector {
     suspend fun detectByUSB() = suspendCoroutine<List<Dadb>> { continuation ->
 
         if(File(adbPath).exists()){
+            println("自定义adb 路径 $adbPath")
             enableAdb(adbPath)
         }
         Thread {
             try {
-                val dadbs = Dadb.list()
+                val dadbs = Dadb.list(keyPair = Util.readDefault())
                 println("adb 探测结果 ${dadbs.size} ")
                 continuation.resume(dadbs)
             } catch (e: Exception) {
