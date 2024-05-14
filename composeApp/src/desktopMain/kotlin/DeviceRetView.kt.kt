@@ -106,7 +106,7 @@ fun DeviceRetView(
                                     if (dev.isSelect) {
                                         try {
                                             println("安装文件 " + dev.adb + "  " + file.absolutePath)
-                                            dev.adb?.push(file, "/sdcard/${file.name}")
+                                            dev.adb?.push(file, "/sdcard/${file.name}",33188)
 
                                             dev.adb?.openShell("su \n").use { shellStream ->
                                                 //  shellStream?.write("")

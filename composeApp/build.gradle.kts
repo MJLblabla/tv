@@ -41,17 +41,17 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "MainKt"
-
+println("icon  "+project.file("ic_launcher.ico").absolutePath)
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb,TargetFormat.Exe)
-            packageName = "com.ikongji.tvboxassistant"
+            packageName = "盒子助手"
             packageVersion = "1.0.0"
 
             windows{
                 shortcut = true
                 dirChooser = true
                // upgradeUuid = "1"
-               // iconFile.set(project.file("compose-icon."))
+               // iconFile.set(project.file("ic_launcher.ico"))
             }
         }
     }
