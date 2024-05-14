@@ -3,6 +3,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
+import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.InetAddress
@@ -17,6 +18,8 @@ import kotlin.coroutines.suspendCoroutine
 
 
 object ADBDetector {
+
+    var adbPath = ""
 
     fun getLocalNetworkIpAddress(): String {
         val networkInterfaces = NetworkInterface.getNetworkInterfaces()
@@ -140,6 +143,10 @@ object ADBDetector {
     }
 
     suspend fun detectByUSB() = suspendCoroutine<List<Dadb>> { continuation ->
+
+        if(File(adbPath).exists()){
+            enableAdb(adbPath)
+        }
         Thread {
             try {
                 val dadbs = Dadb.list()
@@ -151,7 +158,6 @@ object ADBDetector {
             }
         }.start()
     }
-
 
     fun enableAdb(adbPath: String) {
         CoroutineScope(Dispatchers.IO).launch {

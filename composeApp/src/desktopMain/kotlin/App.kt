@@ -37,6 +37,7 @@ fun App() {
             mutableStateOf<ADBUIState>(ADBUIState((mutableListOf<ADBDevice>()), isDetecting = false))
         }
         val uiScope = rememberCoroutineScope()
+        var adbPathStr by remember { mutableStateOf("") }
 
         Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
             Box(
@@ -96,6 +97,40 @@ fun App() {
                                         value = adbUIState.portStr,
                                         onValueChange = { newText ->
                                             adbUIState = adbUIState.copy(portStr = newText)
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textStyle = MaterialTheme.typography.body1,
+                                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.padding(10.dp))
+                    AnimatedVisibility(DetectorType.USB == adbUIState.detectorType) {
+                        Spacer(modifier = Modifier.padding(10.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Box(Modifier.width(80.dp)) {
+                                Text("adb文件路径(可选)", color = Color.White)
+                            }
+                            Spacer(modifier = Modifier.padding(10.dp))
+
+                            RoundedCornerBorderBackground(modifier = Modifier.width(300.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    BasicTextField(
+                                        // 设置文本值和更新文本的回调
+                                        value = adbPathStr,
+                                        onValueChange = { newText ->
+                                            adbPathStr = newText
+                                            ADBDetector.adbPath = newText
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         textStyle = MaterialTheme.typography.body1,
