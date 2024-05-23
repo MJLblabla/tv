@@ -65,7 +65,7 @@ object ADBDetector {
         Thread {
             val retList = mutableListOf<Dadb>()
             try {
-                val adb = Dadb.create(host, port.toInt())
+                val adb = Dadb.create(host, port.toInt(),keyPair = Util.readDefault())
                 adb.openShell("pwd")
                 retList.add(adb)
             } catch (e: IOException) {
@@ -112,7 +112,7 @@ object ADBDetector {
                         val ret = ping(targetIP, port.toInt())
                         println(" 目标ip $targetIP  是否可达 $ret")
                         if (ret) {
-                            val adb = Dadb.create(targetIP, port.toInt())
+                            val adb = Dadb.create(targetIP, port.toInt(),keyPair = Util.readDefault())
                             try {
                                 adb.openShell("pwd")
                                 retList.add(adb)

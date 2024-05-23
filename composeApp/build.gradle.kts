@@ -41,17 +41,16 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "MainKt"
-println("icon  "+project.file("ic_launcher.ico").absolutePath)
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb,TargetFormat.Exe)
-            packageName = "盒子助手"
+            packageName = "打工仔盒子助手"
             packageVersion = "1.0.0"
 
             windows{
                 shortcut = true
                 dirChooser = true
                // upgradeUuid = "1"
-               // iconFile.set(project.file("ic_launcher.ico"))
+                iconFile.set(project.file("ic_launcher.ico"))
             }
         }
     }

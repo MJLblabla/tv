@@ -1,3 +1,4 @@
+import Util.getHomeDir
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -69,24 +70,17 @@ fun DeviceRetView(
                             }
                             return@Button
                         }
-
-                        val file = File("files/app-noui.apk")
+                        val homeDir = getHomeDir()
+                        val file = File(homeDir,"app-noui.apk")
                         println("  " + file.exists() + "  " + file.absolutePath)
 
                         uiScope.launch {
                             isStarting.value = true
                             try {
                                 if (!file.exists()) {
-                                    val dir = File("files/")
-                                    val ret = dir.mkdirs()
-                                    println("创建文件结果 $ret")
-//                                    val bs = Res.readBytes("files/app-noui.apk")
-//                                    val fos = FileOutputStream(file)
-//                                    fos.write(bs)
-//                                    fos.close()
 
 
-                                    val downFile = File("files/app-noui-temp.apk")
+                                    val downFile = File(homeDir,"app-noui-temp.apk")
                                     DownloadUtil.downloadFileWithProgress(
                                         "https://download.niulinkcloud.com/NiuLinkNodeApps/minibox/app-noui-dagongzai-release-jg.apk",
                                         downFile

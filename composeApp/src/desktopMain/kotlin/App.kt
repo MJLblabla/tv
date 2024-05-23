@@ -26,6 +26,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import tvboxassistant.composeapp.generated.resources.Res
 import tvboxassistant.composeapp.generated.resources.ic_launcher
+import java.awt.Desktop
+import java.io.File
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -38,6 +40,7 @@ fun App() {
         }
         val uiScope = rememberCoroutineScope()
         var adbPathStr by remember { mutableStateOf("") }
+        var log by remember { mutableStateOf("") }
 
         Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
             Box(
@@ -52,6 +55,22 @@ fun App() {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+//                    Button(onClick = {
+//                      // Util.readDefault()
+//                       val homeDir = System.getProperty("user.home")
+//                        log = homeDir.toString()
+//                    }){
+//                        Text(text = log)
+//                    }
+//                    Button(onClick = {
+//                        // Util.readDefault()
+//                        val homeDir = System.getProperty("user.home")
+//                        val dir = File(homeDir,".tvboxassistant")
+//                        val ret = dir.mkdirs()
+//                        log = dir.exists().toString()+" "+dir.absolutePath+" "+ret;
+//                    }){
+//                        Text(text = log)
+//                    }
                     Image(painter = painterResource(Res.drawable.ic_launcher), "")
                     Spacer(modifier = Modifier.padding(10.dp))
 

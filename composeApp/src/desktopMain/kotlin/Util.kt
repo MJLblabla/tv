@@ -22,9 +22,16 @@ object Util {
         }
     }
 
+    fun getHomeDir(): File {
+        val homeDir = System.getProperty("user.home")
+        val dir = File(homeDir,".tvboxassistant")
+        val ret = dir.mkdirs()
+        return dir
+    }
     fun readDefault(): AdbKeyPair {
-        val privateKeyFile = File(System.getenv("HOME"), ".android1/adbkey")
-        val publicKeyFile = File(System.getenv("HOME"), ".android1/adbkey.pub")
+        val homeDir = getHomeDir()
+        val privateKeyFile = File(homeDir,"adbkey")
+        val publicKeyFile = File(homeDir,"adbkey.pub")
 
         if (!privateKeyFile.exists()) {
             generate(privateKeyFile, publicKeyFile)
